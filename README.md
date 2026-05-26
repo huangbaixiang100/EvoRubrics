@@ -14,11 +14,14 @@ Both training scripts use `adversarial.training_flow=unified`: within a single s
 
 <p align="center">
   <a href="evorubrics-framework.pdf">
-    <img src="evorubrics-framework.png" alt="EvoRubrics framework overview" width="900"/>
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="evorubrics-framework-dark.png">
+      <img src="evorubrics-framework.png" alt="EvoRubrics framework overview" width="760"/>
+    </picture>
   </a>
 </p>
 
-<p align="center"><em>Full-resolution figure: <a href="evorubrics-framework.pdf">evorubrics-framework.pdf</a></em></p>
+<p align="center"><sub>Click the figure for the <a href="evorubrics-framework.pdf">vector PDF</a>.</sub></p>
 
 **Policy LLM** is trained to maximize rubric scores under generated criteria. **Rubrics Generator** is trained to produce rubrics that remain discriminative (spread scores across answers), diverse, aligned with golden rubrics when enabled, and useful for reflection-based improvement.
 
@@ -27,7 +30,8 @@ Both training scripts use `adversarial.training_flow=unified`: within a single s
 ```
 evorubric/
 ├── evorubric-main/           # Training core (trainer, rewards, dual LoRA worker)
-├── evorubrics-framework.pdf  # Framework overview figure
+├── evorubrics-framework.pdf  # Framework overview figure (vector)
+├── evorubrics-framework.png  # README preview (light mode)
 ├── rubric_guidance/          # Rubric-guided evaluation helpers
 ├── scripts/             # Two HealthBench training recipes
 ├── data/                # Bundled HealthBench open_rubrics splits
