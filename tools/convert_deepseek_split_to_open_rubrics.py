@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""English docstring."""
 from __future__ import annotations
 
 import argparse
