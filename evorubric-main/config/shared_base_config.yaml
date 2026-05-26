@@ -1,0 +1,301 @@
+
+ray_kwargs:
+  ray_init:
+    num_cpus: 16
+    runtime_env:
+      env_vars:
+        TOKENIZERS_PARALLELISM: "false"
+        NCCL_DEBUG: "WARN"
+        VLLM_LOGGING_LEVEL: "INFO"
+
+algorithm:
+  _target_: verl.trainer.config.AlgoConfig
+  adv_estimator: grpo
+  use_kl_in_reward: false
+  gamma: 1.0
+  lam: 1.0
+
+data:
+  train_files: ???
+  val_files: null
+  train_batch_size: 1
+  train_max_samples: -1
+  val_batch_size: null
+  val_max_samples: 100
+  max_prompt_length: 512
+  max_response_length: 512
+  filter_overlong_prompts: true
+  truncation: 'error'
+  shuffle: true
+  trust_remote_code: false
+  reward_fn_key: data_source
+  dataloader_num_workers: 8
+  num_rubrics: 4
+  dataset_mode: "open_rubrics"
+  num_answers: 4
+
+policy_model:
+  path: ???
+
+actor_rollout_ref:
+  hybrid_engine: true
+  
+  model:
+    path: ${policy_model.path}
+    use_shm: false
+    trust_remote_code: false
+    enable_gradient_checkpointing: true
+    use_remove_padding: true
+    lora_rank: 8
+    lora_alpha: 16
+    policy_lora_path: null
+    rubrics_lora_path: null
+    target_modules: "all-linear"
+    exclude_modules: null
+    override_config:
+      attn_implementation: "sdpa"
+  
+  actor:
+    _target_: verl.workers.config.FSDPActorConfig
+    strategy: fsdp
+    use_dynamic_bsz: false
+    optim:
+      _target_: verl.workers.config.FSDPOptimizerConfig
+      optimizer: AdamW
+      optimizer_impl: torch.optim
+      lr: 1e-5
+      weight_decay: 0.0
+      betas: [0.9, 0.999]
+      lr_warmup_steps_ratio: 0.0
+      lr_warmup_steps: -1
+      total_training_steps: -1
+      clip_grad: 1.0
+      min_lr_ratio: 0.0
+      num_cycles: 0.5
+      lr_scheduler_type: constant
+      warmup_style: null
+      override_optimizer_config: null
+    ppo_mini_batch_size: 1
+    ppo_micro_batch_size: null
+    ppo_micro_batch_size_per_gpu: 1
+    ppo_epochs: 1
+    use_kl_loss: true
+    kl_loss_coef: 0.001
+    kl_loss_type: low_var_kl
+    entropy_coeff: 0
+    policy_loss:
+      _target_: verl.workers.config.PolicyLossConfig
+      loss_mode: vanilla
+    checkpoint:
+      _target_: verl.trainer.config.CheckpointConfig
+      save_contents: ['model', 'optimizer', 'extra']
+      load_contents: ${.save_contents}
+    fsdp_config:
+      _target_: verl.workers.config.FSDPEngineConfig
+      wrap_policy:
+        min_num_params: 0
+      param_offload: false
+      optimizer_offload: false
+      offload_policy: false
+      reshard_after_forward: true
+      fsdp_size: -1
+      forward_prefetch: false
+      model_dtype: "bf16"
+      use_orig_params: true
+      mixed_precision:
+        param_dtype: bf16
+        reduce_dtype: fp32
+        buffer_dtype: fp32
+      ulysses_sequence_parallel_size: 1
+      entropy_from_logits_with_chunking: false
+      use_torch_compile: true
+      entropy_checkpointing: false
+  
+  rollout:
+    _target_: verl.workers.config.RolloutConfig
+    mode: sync
+    log_prob_micro_batch_size: null
+    log_prob_micro_batch_size_per_gpu: 2
+    log_prob_use_dynamic_bsz: false
+    log_prob_max_token_len_per_gpu: 16384
+    tensor_model_parallel_size: 1
+    data_parallel_size: 1
+    expert_parallel_size: 1
+    pipeline_model_parallel_size: 1
+    name: vllm
+    gpu_memory_utilization: 0.85
+    n: 4
+    temperature: 0.7
+    top_p: 0.95
+    load_format: safetensors
+    free_cache_engine: true
+    enable_prefix_caching: true
+    val_kwargs:
+      _target_: verl.workers.config.SamplingConfig
+      top_k: -1
+      top_p: 1.0
+      temperature: 0
+      n: 1
+      do_sample: false
+    multi_turn:
+      _target_: verl.workers.config.MultiTurnConfig
+      enable: false
+  
+  ref:
+    log_prob_micro_batch_size: null
+    log_prob_micro_batch_size_per_gpu: 2
+    log_prob_use_dynamic_bsz: false
+    log_prob_max_token_len_per_gpu: 16384
+    ulysses_sequence_parallel_size: 1
+    entropy_from_logits_with_chunking: false
+    entropy_checkpointing: false
+    use_remove_padding: true
+    fsdp_config:
+      _target_: verl.workers.config.FSDPEngineConfig
+      wrap_policy:
+        min_num_params: 0
+      param_offload: true
+      optimizer_offload: false
+      offload_policy: false
+      reshard_after_forward: true
+      fsdp_size: -1
+      forward_prefetch: false
+      model_dtype: "bf16"
+      use_orig_params: true
+      mixed_precision:
+        param_dtype: bf16
+        reduce_dtype: fp32
+        buffer_dtype: fp32
+      ulysses_sequence_parallel_size: 1
+      entropy_from_logits_with_chunking: false
+      use_torch_compile: true
+      entropy_checkpointing: false
+
+critic:
+  enable: false
+
+reward_model:
+  enable: false
+  enable_resource_pool: false
+  reward_manager: "batch"
+
+custom_reward_function:
+  path: ???
+  name: "adversarial_reward_fn_batch"
+
+trainer:
+  device: cuda
+  val_before_train: false
+  critic_warmup: 0
+  logger: ["console"]
+  project_name: 'healthbench_shared_base_grpo'
+  experiment_name: 'qwen_dual_lora_adversarial'
+  
+  swanlab:
+    enabled: false
+    api_key: null
+    workspace: null
+  
+  n_gpus_per_node: ???
+  nnodes: 1
+  save_freq: 2
+  test_freq: -1
+  total_epochs: 5
+  total_training_steps: null
+  save_lora_freq: 2
+  default_local_dir: checkpoints/${trainer.project_name}/${trainer.experiment_name}
+  default_hdfs_dir: null
+  resume_mode: disable
+  resume_from_path: null
+  resume_step: 0
+  
+  eval:
+    enabled: false
+    test_file: null
+    num_samples: 10
+    eval_before_train: false
+    eval_freq: 100
+
+dual_lora:
+  policy_llm:
+    rank: 8
+    alpha: 16
+  rubrics_generator:
+    rank: 8
+    alpha: 16
+
+adversarial:
+  similarity_weight: 0.0
+  discrimination_weight: 0.3
+  diversity_weight: 0.0
+  reflect_weight: 0.6
+  similarity_penalty_weight: 0.1
+  similarity_penalty_threshold: 0.8
+
+  enable_similarity: false
+  enable_discrimination: true
+  enable_diversity: false
+  enable_reflect: true
+
+  # false: score baseline/revised with generated rubrics; true: use ground_truth_rubrics (golden mode)
+  reflect_use_golden_rubrics: false
+
+  enable_exemplar_trick: true
+
+  use_universal_rubrics_system_prompt: true
+  answer_aware_num_refs: 2
+
+  generation_temperature: 1.0
+  reflect_generation_temperature: 0.0
+
+  training_flow: unified
+
+  rubrics_update_freq: 1
+  policy_update_freq: 1
+  policy_grad_accum_steps: 1
+  rubrics_grad_accum_steps: 1
+  num_iterations_per_query: 1
+  max_rubrics_parse_retries: 3
+
+global_profiler:
+  _target_: verl.utils.profiler.ProfilerConfig
+  tool: null
+  steps: null
+  profile_continuous_steps: false
+  save_path: "outputs/profile"
+  global_tool_config:
+    nsys:
+      _target_: verl.utils.profiler.config.NsightToolConfig
+      discrete: false
+      controller_nsight_options:
+        trace: "cuda,nvtx,cublas,ucx"
+        cuda-memory-usage: "true"
+        cuda-graph-trace: "graph"
+      worker_nsight_options:
+        trace: "cuda,nvtx,cublas,ucx"
+        cuda-memory-usage: "true"
+        cuda-graph-trace: "graph"
+        capture-range: "cudaProfilerApi"
+        capture-range-end: null
+        kill: none
+    npu:
+      _target_: verl.utils.profiler.config.NPUToolConfig
+      contents: []
+      level: "level1"
+      analysis: true
+      discrete: false
+    torch:
+      _target_: verl.utils.profiler.config.TorchProfilerToolConfig
+      step_start: 0
+      step_end: null
+    torch_memory:
+      _target_: verl.utils.profiler.config.TorchMemoryToolConfig
+      trace_alloc_max_entries: 100000
+      stack_depth: 32
+      context: "all"
+      stacks: "all"
+      kw_args: {}
+
+transfer_queue:
+  enable: false
+

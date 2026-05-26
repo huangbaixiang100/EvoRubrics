@@ -1,0 +1,26 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Runtime artifacts
+checkpoints/
+training_logs/
+outputs/
+sft-model/
+minilm-cache/
+.ray_tmp/
+swanlog/
+*.log
+
+# Secrets & local env
+.env
+.venv/
+venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp

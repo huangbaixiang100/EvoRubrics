@@ -1,0 +1,23 @@
+# Core training stack (aligned with vendored third_party/verl)
+accelerate
+datasets
+dill
+hydra-core
+numpy<2.0.0
+omegaconf
+pandas
+peft
+pyarrow>=19.0.0
+ray[default]
+safetensors
+tensordict>=0.8.0,<=0.10.0,!=0.9.0
+torch
+torchdata
+transformers
+tqdm
+vllm==0.8.4
+
+# EvoRubrics-specific
+bert-score
+openai
+sentence-transformers
