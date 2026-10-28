@@ -1,5 +1,7 @@
 # EvoRubrics: Dynamic Rubrics as Rewards via Adversarial Co-Evolution for LLM Reinforcement Learning
 
+**Paper:** [Findings of the Association for Computational Linguistics: EMNLP 2026](https://aclanthology.org/2026.findings-emnlp.2273/)
+
 Co-evolutionary reinforcement learning with a **Policy LLM** and a **Rubric Generator** that jointly improve through adversarial interaction within each training step.
 
 ## Overview
@@ -116,6 +118,36 @@ This project builds on and benefits from the following open-source efforts:
 - [**verl**](https://github.com/volcengine/verl) — distributed RL training framework (vendored in `third_party/verl/`)
 - [**vLLM**](https://github.com/vllm-project/vllm) — high-throughput LLM inference for rollout and LLM-judge serving
 - [**HealthBench**](https://github.com/openai/simple-evals) — medical QA benchmark and rubric-based evaluation protocol used for training and evaluation data
+
+## Citation
+
+```bibtex
+@inproceedings{ding-etal-2026-evorubrics,
+    title = "{E}vo{R}ubrics: Dynamic Rubrics as Rewards via Adversarial Co-Evolution for {LLM} Reinforcement Learning",
+    author = "Ding, Hongxin  and
+      Huang, Baixiang  and
+      Fang, Yue  and
+      Liao, Weibin  and
+      Li, Zheng  and
+      Zhang, Jinyang  and
+      Wu, Zhijing  and
+      Zhao, Junfeng  and
+      Wang, Yasha",
+    editor = "Lee, Hung-Yi  and
+      Dev, Sunipa  and
+      Li, Jessy  and
+      Elliott, Desmond",
+    booktitle = "Findings of the {A}ssociation for {C}omputational {L}inguistics: {EMNLP} 2026",
+    month = oct,
+    year = "2026",
+    address = "Budapest, Hungary",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2026.findings-emnlp.2273/",
+    pages = "48660--48680",
+    ISBN = "979-8-89176-462-0",
+    abstract = "Rubric-based rewards offer interpretable and fine-grained optimization signals for reinforcement learning in open-ended tasks where verifiable answers are unavailable. However, pre-constructed rubrics remain static throughout training, creating a fundamental mismatch with the evolving policy: fixed criteria gradually lose discriminative power as the model improves, leading to reward saturation and potential hacking. Recent dynamic rubric methods partially address this but rely on external frontier models or ground-truth answers, and update rubrics only at coarse granularity. We propose EvoRubrics, a co-evolutionary RL framework where a Policy LLM and a Rubric Generator jointly improve through adversarial interaction within each training step. As the policy improves under the rubric generator{'}s guidance, the rubric generator adapts its criteria to remain discriminative and informative, enabling evaluation to track the policy in real time and naturally inducing an automatic curriculum. Experiments show that EvoRubrics consistently outperforms static and dynamic rubric baselines across benchmarks. The learned Rubric Generator further generalizes as a transferable reward model. Notably, even a fully self-supervised variant without any external supervision achieves meaningful gains, suggesting that co-evolution between generation and evaluation alone can provide sufficiently rich learning signals. Our code is publicly available at https://github.com/huangbaixiang100/EvoRubrics."
+}
+```
 
 ## License
 
